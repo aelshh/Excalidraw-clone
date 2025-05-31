@@ -223,23 +223,23 @@ app.get("/api/v1/chat/:roomId", authMiddleware, async (req, res) => {
   }
 });
 
-app.get("/api/v1/room/:roomId", authMiddleware, async (req, res) => {
-  const roomId = Number(req.params.roomId);
+app.get("/api/v1/room/:slug", authMiddleware, async (req, res) => {
+  const slug = req.params.slug;
   try {
     const room = await prisma.room.findFirst({
       where: {
-        id: roomId,
+        slug,
       },
     });
     if (!room) {
       res.status(404).json({
-        message: "No room with this Id",
+        message: "No room with this slug",
       });
       return;
     }
-    const roomName = room.slug;
+    const roomId = room.id;
     res.json({
-      roomName,
+      roomId,
     });
   } catch (e) {
     console.log(e);
