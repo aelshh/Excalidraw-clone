@@ -223,6 +223,27 @@ app.get("/api/v1/chat/:roomId", authMiddleware, async (req, res) => {
   }
 });
 
-
+app.get("/api/v1/room/:roomId", authMiddleware, async (req, res) => {
+  const roomId = Number(req.params.roomId);
+  try {
+    const room = await prisma.room.findFirst({
+      where: {
+        id: roomId,
+      },
+    });
+    if (!room) {
+      res.status(404).json({
+        message: "No room with this Id",
+      });
+      return;
+    }
+    const roomName = room.slug;
+    res.json({
+      roomName,
+    });
+  } catch (e) {
+    console.log(e);
+  }
+});
 
 app.listen(port, () => console.log(`Server is running on port: ${port}`));
