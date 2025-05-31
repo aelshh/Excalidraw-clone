@@ -2,6 +2,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import dotenv from "dotenv";
 import { parse } from "url";
+import prisma from "@repo/db";
 
 dotenv.config({ path: "../../.env" });
 
@@ -19,9 +20,9 @@ function auth(token: string) {
 }
 
 type User = {
-  userId: number;
+  userId: string;
   ws: WebSocket;
-  rooms?: string[];
+  rooms?: number[];
 };
 
 const users: User[] = [];
@@ -52,7 +53,7 @@ wss.on("connection", function connection(ws, req) {
   }
   ws.send("Connected to ws server");
 
-  ws.on("message", function message(data) {
+  ws.on("message", async function message(data) {
     const message = data.toString();
     const parsedData = JSON.parse(message);
 
@@ -71,14 +72,31 @@ wss.on("connection", function connection(ws, req) {
       const user = users.find((x) => x.ws == ws);
       const joinedRooms = user?.rooms;
       if (joinedRooms) {
+        try {
+          await prisma.chat.create({
+            data: {
+              userId: user.userId,
+              message: parsedData.message,
+              roomId: parsedData.roomId,
+            },
+          });
+        } catch (e) {
+          console.log(e);
+        }
         joinedRooms.forEach((room) => {
           users.forEach((u) => {
             if (u.rooms?.includes(room)) {
-              u.ws.send(parsedData.message);
+              u.ws.send(JSON.stringify(parsedData.message));
             }
           });
         });
       }
+    } else if (parsedData.type === "leave_room") {
+      const user = users.find((x) => x.ws == ws);
+      if (user?.rooms?.includes(parsedData.roomId)) {
+        user.rooms = user.rooms.filter((x) => x !== parsedData.roomId);
+      }
+      ws.send(`Joined Rooms: ${user?.rooms}`);
     } else {
       ws.send(`You sent ${message}`);
     }
