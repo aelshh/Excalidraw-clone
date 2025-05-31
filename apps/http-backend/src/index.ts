@@ -3,7 +3,6 @@ import { z } from "zod";
 import prisma from "@repo/db";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
-import path from "path";
 import bcrypt from "bcrypt";
 import cors from "cors";
 import authMiddleware from "./middlewares/authMiddleware";
@@ -188,5 +187,42 @@ app.get("/api/v1/create-room/:slug", authMiddleware, async (req, res) => {
     return;
   }
 });
+
+app.get("/api/v1/chat/:roomId", authMiddleware, async (req, res) => {
+  const roomId = Number(req.params.roomId);
+
+  try {
+    const chatExists = await prisma.chat.findFirst({
+      where: {
+        roomId,
+      },
+    });
+
+    if (!chatExists) {
+      res.json({
+        message: "No chats in this room yet or room does not exits",
+      });
+      return;
+    }
+
+    const chats = await prisma.chat.findMany({
+      where: {
+        roomId,
+      },
+      orderBy: {
+        id: "asc",
+      },
+      take: 50,
+    });
+    res.json({
+      chats,
+    });
+  } catch (e) {
+    console.log(e);
+    res.status(500).json("Some Internal Error");
+  }
+});
+
+
 
 app.listen(port, () => console.log(`Server is running on port: ${port}`));
