@@ -8,7 +8,7 @@ import bcrypt from "bcrypt";
 import cors from "cors";
 import authMiddleware from "./middlewares/authMiddleware";
 
-dotenv.config();
+dotenv.config({ path: "../../.env" });
 
 const app = express();
 const port = 3001;

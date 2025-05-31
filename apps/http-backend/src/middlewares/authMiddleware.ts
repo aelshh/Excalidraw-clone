@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import path from "path";
 
-dotenv.config({ path: "../../.env" });
+dotenv.config({ path: "../../../.env" });
 
 export default function authMiddleware(
   req: Request,
